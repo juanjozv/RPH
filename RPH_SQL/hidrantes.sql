@@ -1,6 +1,5 @@
 ----------------- RPH: Radio Positivo de Hidrantes -----------------------
 
-
 create or replace type gps as object(
 	latitud float,
 	longitud float
@@ -8,7 +7,7 @@ create or replace type gps as object(
 );
 /
 
-/*create or replace type body gps 
+/* create or replace type body gps 
 is
 	constructor function gps(lat float, lon float)
 	return self as result
@@ -19,7 +18,7 @@ is
 		return;
 	end;
 end; 
-/*/
+/ */
 
 
 create or replace type boquilla as object(
@@ -29,18 +28,18 @@ create or replace type boquilla as object(
 );
 /
 
-/*create or replace type body boquilla 
+/* create or replace type body boquilla 
 is
-	-- constructor function boquilla(xtipo int, xdiametro float)
-	-- return self as result
-	-- is
-	-- begin
-		-- self.tipo := xtipo;
-		-- self.diametro := xdiametro;
-		-- return;
-	-- end;
+	constructor function boquilla(xtipo int, xdiametro float)
+	return self as result
+	is
+	begin
+		self.tipo := xtipo;
+		self.diametro := xdiametro;
+		return;
+	end;
 end; 
-/*/
+/ */
 
 -- Para el contenedor de boquillas
 create or replace type boquillas as VARRAY(4) of boquilla;
@@ -51,14 +50,14 @@ create or replace type hidrante as object(
 	direccion varchar2(30), 
 	posicionGPS gps,
 	misBoquillas boquillas,
-	estado int,
-	constructor function hidrante(xdireccion varchar2, xposicionGPS gps, xmisBoquillas boquillas, xestado int) return self as result
+	estado int
+	--constructor function hidrante(xdireccion varchar2, xposicionGPS gps, xmisBoquillas boquillas, xestado int) return self as result
 );
 /
 
-create or replace type body hidrante 
+/* create or replace type body hidrante 
 is
-	constructor function hidrante(xdireccion varchar2, xposicionGPS gps, xmisBoquillas boquillas, xestado int)
+ 	constructor function hidrante(xdireccion varchar2, xposicionGPS gps, xmisBoquillas boquillas, xestado int)
 	return self as result
 	is
 	begin
@@ -67,13 +66,12 @@ is
 		self.misBoquillas := xmisBoquillas;
 		self.estado := xestado;
 		return;
-	end;
+	end; 
 end; 
-/
+/ */
 
 create or replace type contenedorHidrantes is table of hidrante;
 /
-
 
 -- Creacion de tabla Hidrantes
 --Poner caudal?
@@ -93,7 +91,10 @@ create table Hidrantes(
 	estado int,
 	constraint pkH primary key (codigo_hidrante)
 );
-insert into Hidrantes values(1, 'donde kim :V', 11.1, 22.2, 1, 1.1, 2, 2.2, 3, 3.3, 4, 4.4, 1)
+
+insert into Hidrantes values(1, 'donde kim :V', 11.1, 22.2, 1, 1.1, 2, 2.2, 3, 3.3, 4, 4.4, 1);
+insert into Hidrantes values(2, 'donde juanjo :V', 11.1, 22.2, 1, 1.1, 2, 2.2, 3, 3.3, 4, 4.4, 1);
+insert into Hidrantes values(3, 'donde dani :V', 11.1, 22.2, 1, 1.1, 2, 2.2, 3, 3.3, 4, 4.4, 1);
 ------------------
 -- Creacion de funciones
 
@@ -129,17 +130,17 @@ end;
 /
 
 
-create or replace procedure RPH(posicion gps, radio float)
---create or replace procedure RPH
-
+create or replace procedure RPH
 is
 	cursor totalHidrantes is 
 	select direccion, latitudGPS, longitudGPS, boquilla1Tipo, boquilla1diametro,
 		boquilla2Tipo, boquilla2diametro, boquilla3Tipo, boquilla3diametro, boquilla4Tipo,
 		boquilla4diametro, estado
-	from Hidrantes;
+	from Hidrantes; 
 	
-	misHidrantes contenedorHidrantes;
+	misHidrantes contenedorHidrantes := contenedorHidrantes();
+	nuevasBoquillas boquillas := boquillas();
+	
 	dir varchar2(30);
 	latGPS float;
 	lonGPS float;
@@ -153,12 +154,11 @@ is
 	boq4diametro float;
 	est int;
 
-	nuevasBoquillas boquillas;
 	i int;
 	
 begin
+	i := 1;
 	open totalHidrantes;
-	i := 0;
 	LOOP
 		fetch totalHidrantes into dir, latGPS, lonGPS,
 			boq1Tipo, boq1diametro,
@@ -166,30 +166,20 @@ begin
 			boq3Tipo, boq3diametro,
 			boq4Tipo, boq4diametro,
 			est;
-			
-		/*nuevoHidrante.direccion := dir;
-		nuevoHidrante.posicionGPS.latitud := latGPS;
-		nuevoHidrante.posicionGPS.longitud := lonGPS;
-		*/
-		nuevasBoquillas := NULL;
+		exit when totalHidrantes%notfound;	
+		
+		nuevasBoquillas := boquillas();
 		nuevasBoquillas.extend(4);
 		nuevasBoquillas(1) := boquilla(boq1Tipo, boq1diametro);
 		nuevasBoquillas(2) := boquilla(boq2Tipo, boq2diametro);
 		nuevasBoquillas(3) := boquilla(boq3Tipo, boq3diametro);
 		nuevasBoquillas(4) := boquilla(boq4Tipo, boq4diametro);
 		
-		
-		-- nuevoHidrante.estado := est;
-		
-		--posGPS := ;
-		i := i + 1;
 		misHidrantes.extend();
 		misHidrantes(i) := hidrante(dir, gps(latGPS, lonGPS), nuevasBoquillas, est);
-		
-		exit when totalHidrantes%notfound;
+		dbms_output.put_line(misHidrantes(i).posicionGPS.latitud);
+		i := i + 1;		
 	END LOOP;
-	--dbms_output.put_line(nuevoHidrante.posicionGPS.latitud);
-	
 end;
 /
 
