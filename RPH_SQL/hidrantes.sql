@@ -50,14 +50,15 @@ create or replace type hidrante as object(
 	direccion varchar2(30), 
 	posicionGPS gps,
 	misBoquillas boquillas,
-	estado int
+	estado int,
+	member function toString return varchar2
 	--constructor function hidrante(xdireccion varchar2, xposicionGPS gps, xmisBoquillas boquillas, xestado int) return self as result
 );
 /
 
-/* create or replace type body hidrante 
+create or replace type body hidrante 
 is
- 	constructor function hidrante(xdireccion varchar2, xposicionGPS gps, xmisBoquillas boquillas, xestado int)
+ 	/*constructor function hidrante(xdireccion varchar2, xposicionGPS gps, xmisBoquillas boquillas, xestado int)
 	return self as result
 	is
 	begin
@@ -66,9 +67,18 @@ is
 		self.misBoquillas := xmisBoquillas;
 		self.estado := xestado;
 		return;
-	end; 
+	end;*/
+	member function toString return varchar2
+	is
+		s varchar2(1000);
+	begin		
+		s := '[ Ubicacion Hidrante: ' || direccion || ' Boquilla 1: ' || misBoquillas(1).diametro 
+			||  ' Boquilla 2:' || misBoquillas(2).diametro ||  ' Boquilla 3:' || misBoquillas(3).diametro
+			||  'Boquilla 4:' || misBoquillas(4).diametro || ' Estado: ' || estado || ' ]';
+		return s;
+	end;
 end; 
-/ */
+/ 
 
 create or replace type contenedorHidrantes is table of hidrante;
 /
@@ -92,9 +102,9 @@ create table Hidrantes(
 	constraint pkH primary key (codigo_hidrante)
 );
 
-insert into Hidrantes values(1, 'donde kim :V', 11.1, 22.2, 1, 1.1, 2, 2.2, 3, 3.3, 4, 4.4, 1);
-insert into Hidrantes values(2, 'donde juanjo :V', 11.1, 22.2, 1, 1.1, 2, 2.2, 3, 3.3, 4, 4.4, 1);
-insert into Hidrantes values(3, 'donde dani :V', 11.1, 22.2, 1, 1.1, 2, 2.2, 3, 3.3, 4, 4.4, 1);
+insert into Hidrantes values(1, 'donde kim :V', 99.987692, -84.097697, 1, 1.1, 2, 2.2, 3, 3.3, 4, 4.4, 1);
+insert into Hidrantes values(2, 'donde juanjo :V', 9.988626, -84.095980, 1, 1.1, 2, 2.2, 3, 3.3, 4, 4.4, 1);
+insert into Hidrantes values(3, 'donde dani :V', 9.987676, -84.098681, 1, 1.1, 2, 2.2, 3, 3.3, 4, 4.4, 1);
 ------------------
 -- Creacion de funciones
 
@@ -125,12 +135,15 @@ begin
 	deLon := degreesToRadians(posicion2.longitud - posicion1.longitud);
 	lat1 := degreesToRadians(posicion1.latitud);
 	lat2 := degreesToRadians(posicion2.latitud);
-	return 2 * 3961 * asin( sqrt( POWER(sin(deLat/2), 2) + cos(lat1) * cos(lat2) * POWER(sin(deLon/2), 2)) );
+	distancia := 2 * 6371 * asin( sqrt( POWER(sin(deLat/2), 2) + cos(lat1) * cos(lat2) * POWER(sin(deLon/2), 2)) );
+	distancia := ABS(distancia);
+	return distancia * 1000;
 end;
 /
 
 
 create or replace procedure RPH
+--create or replace procedure RPH(miPosicion gps, radio float)
 is
 	cursor totalHidrantes is 
 	select direccion, latitudGPS, longitudGPS, boquilla1Tipo, boquilla1diametro,
@@ -156,8 +169,16 @@ is
 
 	i int;
 	
+	hidrantesUtiles contenedorHidrantes := contenedorHidrantes();
+	
+	recorrido float;
+	
+	radio float;
+	
 begin
+	radio := 200;
 	i := 1;
+	-- Para cargar array con TODOS LOS hidrantes
 	open totalHidrantes;
 	LOOP
 		fetch totalHidrantes into dir, latGPS, lonGPS,
@@ -177,9 +198,31 @@ begin
 		
 		misHidrantes.extend();
 		misHidrantes(i) := hidrante(dir, gps(latGPS, lonGPS), nuevasBoquillas, est);
-		dbms_output.put_line(misHidrantes(i).posicionGPS.latitud);
 		i := i + 1;		
 	END LOOP;
+	
+	--Metodos para meter en el array los más cercanos
+	for contador in misHidrantes.FIRST .. misHidrantes.LAST
+	loop 
+		--recorrido := calcularDistancia(miPosicion, misHidrantes(contador).posicionGPS);
+		recorrido := calcularDistancia(gps(9.988549, -84.096393), misHidrantes(contador).posicionGPS);
+		if recorrido <= radio then
+			hidrantesUtiles.extend();
+			hidrantesUtiles(hidrantesUtiles.last) := misHidrantes(contador);
+		end if;
+		
+	end loop;
+	
+	if hidrantesUtiles.count > 0
+	then
+		for contador2 in hidrantesUtiles.FIRST .. hidrantesUtiles.LAST
+		loop 
+			dbms_output.put_line(hidrantesUtiles(contador2).toString());
+		end loop;
+	else
+		dbms_output.put_line('No hay, no existe');
+	end if;
+	
 end;
 /
 
