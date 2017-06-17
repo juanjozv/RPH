@@ -1,4 +1,4 @@
-show user 
+prompt ~~~ BUSQUEDA DE HIDRANTES DENTRO DEL RADIO SOLICITADO ~~~
 prompt Por favor haga su seleccion:
 prompt 1: Calcular RPH
 prompt 2: Salir
