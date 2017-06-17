@@ -165,91 +165,7 @@ end;
 /
 
 
-/* --create or replace procedure RPH
 create or replace procedure RPH(miPosicion gps, radio float)
-is
-	cursor totalHidrantes is 
-	select direccion, latitudGPS, longitudGPS, boquilla1Tipo, boquilla1diametro,
-		boquilla2Tipo, boquilla2diametro, boquilla3Tipo, boquilla3diametro, boquilla4Tipo,
-		boquilla4diametro, estado, caudal
-	from Hidrantes; 
-	
-	misHidrantes contenedorHidrantes := contenedorHidrantes();
-	nuevasBoquillas boquillas := boquillas();
-	
-	dir varchar2(100);
-	latGPS float;
-	lonGPS float;
-	boq1Tipo int;
-	boq1diametro float;
-	boq2Tipo int;
-	boq2diametro float;
-	boq3Tipo int;
-	boq3diametro float;
-	boq4Tipo int;
-	boq4diametro float;
-	est int;
-	caudalEsperado float;
-
-	i int;
-	
-	hidrantesUtiles contenedorHidrantes := contenedorHidrantes();
-	
-	recorrido float;
-	
-	--radio float;
-	
-begin
-	--radio := 200;
-	i := 1;
-	-- Para cargar array con TODOS LOS hidrantes
-	open totalHidrantes;
-	LOOP
-		fetch totalHidrantes into dir, latGPS, lonGPS,
-			boq1Tipo, boq1diametro,
-			boq2Tipo, boq2diametro,
-			boq3Tipo, boq3diametro,
-			boq4Tipo, boq4diametro,
-			est, caudalEsperado;
-		exit when totalHidrantes%notfound;	
-		
-		nuevasBoquillas := boquillas();
-		nuevasBoquillas.extend(4);
-		nuevasBoquillas(1) := boquilla(boq1Tipo, boq1diametro);
-		nuevasBoquillas(2) := boquilla(boq2Tipo, boq2diametro);
-		nuevasBoquillas(3) := boquilla(boq3Tipo, boq3diametro);
-		nuevasBoquillas(4) := boquilla(boq4Tipo, boq4diametro);
-		
-		misHidrantes.extend();
-		misHidrantes(i) := hidrante(dir, gps(latGPS, lonGPS), nuevasBoquillas, est, caudalEsperado);
-		i := i + 1;		
-	END LOOP;
-	
-	--Metodos para meter en el array los más cercanos
-	for contador in misHidrantes.FIRST .. misHidrantes.LAST
-	loop 
-		recorrido := calcularDistancia(miPosicion, misHidrantes(contador).posicionGPS);
-		if recorrido <= radio then
-			hidrantesUtiles.extend();
-			hidrantesUtiles(hidrantesUtiles.last) := misHidrantes(contador);
-		end if;
-		
-	end loop;
-	
-	if hidrantesUtiles.count > 0
-	then
-		for contador2 in hidrantesUtiles.FIRST .. hidrantesUtiles.LAST
-		loop 
-			dbms_output.put_line(hidrantesUtiles(contador2).toString());
-		end loop;
-	else
-		dbms_output.put_line('No se encuentran hidrantes disponibles!');
-	end if;
-	
-end;
-/ */
-
-create or replace procedure RPH(latitud float, longitud float, radio float)
 is
  cursor totalHidrantes is 
  select direccion, latitudGPS, longitudGPS, boquilla1Tipo, boquilla1diametro,
@@ -276,7 +192,7 @@ is
  utiles integer;
  i int;
  recorrido float(10);
- miPosicion gps := gps(latitud, longitud);
+ 
  
 begin
  i := 1;
@@ -315,7 +231,7 @@ begin
  end loop; 
  if utiles = 0 then
   dbms_output.put_line('No se encuentran hidrantes disponibles!');
-  end if;
+ end if;
 end;
 /
 

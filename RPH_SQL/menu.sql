@@ -6,8 +6,8 @@ accept op prompt "Digite 1 o 2: "
 set term off 
 column script new_value v_script 
 select case '&op'
-	when '1' then 'c:/menu/rph'
-	when '2' then 'c:/menu/exitmenu'
+	when '1' then 'C:/Users/Juanjo/Desktop/RPH/RPH_SQL/rph'
+	when '2' then 'C:/Users/Juanjo/Desktop/RPH/RPH_SQL/exitmenu'
 	else 'c:/menu/menu'
 	end as script
 from dual; 
